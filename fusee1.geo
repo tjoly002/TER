@@ -30,3 +30,5 @@ Physical Surface("Tinit", 100) = {1};
 Transfinite Surface {1} Right;
 //+
 Recombine Surface {1};
+//+
+Transfinite Surface {1};
