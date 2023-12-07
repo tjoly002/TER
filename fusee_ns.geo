@@ -21,8 +21,10 @@ Curve Loop(1) = {4, 1, 2, 3};
 //+
 Plane Surface(1) = {1};
 //+
-Physical Curve("NordOuestEst", 10) = {4, 3, 2};
+Physical Curve("Nord-Est", 10) = { 3, 2};
 //+
 Physical Curve("Sud", 11) = {1};
+//+
+Physical Curve("Ouest", 12) = {4};
 //+
 Physical Surface("Tinit", 100) = {1};

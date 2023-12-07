@@ -4,11 +4,11 @@ program main
     use mod_sortie
 
     implicit none
-    integer :: T_init,T_source,D,CFL,i,k,compteur,nplot, cl_bord
-    character(len=40) :: nom_maillage
+    integer :: T_init,T_source,D,CFL,i,k,compteur,nplot
+    character(len=40) :: nom_maillage, cl_bord
     integer:: nb_mailles, nb_aretes,nb_arete_bord
     real(pr) :: Delta_t,S,Min,Flux,centre_maille,t_max, h, T_ext
-    real(pr), dimension(:), allocatable :: aire_maille, d_arete, l_arete,Tn,Tnp1,Erreur
+    real(pr), dimension(:), allocatable :: aire_maille, d_arete, l_arete,Tn,Tnp1,Erreur, Residu,Residu_0, Iter
     real(pr), dimension(:,:), allocatable :: coord_noeud, milieu_arete
     integer, dimension(:,:), allocatable :: arete_maille, noeud_maille, maille_arete
     integer, dimension(:), allocatable :: cl_arete,arete_bord
@@ -34,7 +34,7 @@ program main
     close(1)
     !print *, T_init,T_G,T_D,Phi_b,t_max,D,CFL,nom_maillage
 
-
+    open(2,file="Residu.dat")
     !Appel du maillage/Etape2
     call maillage(nom_maillage,nb_mailles, nb_aretes                        &
     &        , coord_noeud, noeud_maille, aire_maille, l_arete, d_arete           &
@@ -46,14 +46,13 @@ program main
     !Initialisation de Tn et Tnp1/Etape3
     allocate(Tn(1:nb_mailles))
     allocate(Tnp1(1:nb_mailles))
+    allocate(Residu(1:nb_aretes),Residu_0(1:nb_aretes))
 
     do i=1,nb_mailles
         Tn(i)=T_init
     end do
     !print *, Tn
 
-
-    print*, aire_maille(1)
 
     !Calcul du pas de temps /Etape4
      !Calcul du min
@@ -66,7 +65,6 @@ program main
         do k=1,3
 
             S=S+l_arete(arete_maille(i,k))*D/d_arete(arete_maille(i,k))
-            print*, l_arete(arete_maille(i,k))*D/d_arete(arete_maille(i,k))
         end do
 
         if (aire_maille(i)/S<min) then
@@ -77,11 +75,10 @@ program main
     end do
 
     Delta_t=min
-    print*, Delta_t
+
     !Le Delta_t est bonnnnnnnnn!!!
 
-
-
+    allocate(Iter(1:int(t_max/Delta_t)))
 
     !Boucle en temps/Etape5
 
@@ -110,43 +107,94 @@ program main
     ! end do
 
 
-
     !Boucle en temps
   !  print*, "Boucle en temps 1"
     call sortie(0,Tn,coord_noeud,noeud_maille)
-    do i=1,int(t_max/Delta_t)
-
+   do i=1,int(t_max/Delta_t)
         !Calcul du flux sur les aretes de bord
+        Residu=0.
         do k=1,nb_aretes
 
             Flux=0
             if (maille_arete(k,2)==0) then
 
                 if (cl_arete(k)==10) then
-                  if(cl_bord==1) then
+                  if(cl_bord=="FR") then !Condition de Fourier-Robin
                     Flux=h*(Tn(maille_arete(k,1))-T_ext)
-                  else
+
+                    if (i==2) then
+                      Residu_0(k)=Flux
+
+                    else
+                      Residu(k)=Flux
+
+                    end if
+                  else if(cl_bord=="NH") then ! Condition de Neumann homogène
                     Flux=0
+                    if (i==2) then
+                      Residu_0(k)=Flux
+
+                    else
+                      Residu(k)=Flux
+
+                    end if
                   end if
 
                 end if
                 if (cl_arete(k)==11) then
 
                     Flux=-1._pr*D*(T_source-Tn(maille_arete(k,1)))/d_arete(k)
-                    ! print*, T_source
+                    if (i==2) then
+                      Residu_0(k)=Flux
+
+                    else
+                      Residu(k)=Flux
+
+                    end if
+                else if (cl_arete(k)==12) then
+
+                    Flux=0
+                    if (i==2) then
+                      Residu_0(k)=Flux
+
+                    else
+                      Residu(k)=Flux
+
+                    end if
+
                 end if
 
                 Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
             else
-                print*, "Boucle en temps 6"
+
                 Flux=-D*(Tn(maille_arete(k,2))-Tn(maille_arete(k,1)))/d_arete(k)
                 Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
                 Tn(maille_arete(k,2))=Tn(maille_arete(k,2))+Delta_t/aire_maille(maille_arete(k,2))*l_arete(k)*Flux
+                if (i==2) then
+                  Residu_0(k)=Flux
+
+                else
+                  Residu(k)=Flux
+
+                end if
+
             end if
+
+
+
+
+            Iter(i)=i
 
         end do
         ! print* ,"i=", i
         ! print *, "Tn", Tn
+
+        ! Calcul du résidu à chaque itération
+        if (i>20 .and. i<800) then 
+        write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0)
+      end if
+
+
 
 
         nplot=int(t_max/Delta_t/100)
@@ -154,6 +202,8 @@ program main
             call sortie(i,Tn,coord_noeud,noeud_maille)
         end if
     end do
+
+
     !print *, "Tf", Tn
 
     !Calcul de l'erreur entre notre résultat et la fonction exacte
@@ -169,6 +219,9 @@ program main
     deallocate(Tn)
     deallocate(Tnp1)
     deallocate(arete_bord)
+    deallocate(Residu)
+    deallocate(Iter)
+    close(2)
 
     !
     ! contains
