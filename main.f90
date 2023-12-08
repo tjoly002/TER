@@ -122,41 +122,44 @@ program main
                   if(cl_bord=="FR") then !Condition de Fourier-Robin
                     Flux=h*(Tn(maille_arete(k,1))-T_ext)
 
-                    if (i==2) then
+                    if (i==1) then
                       Residu_0(k)=Flux
-
+                      Residu(k)=Flux
                     else
                       Residu(k)=Flux
-
                     end if
+
                   else if(cl_bord=="NH") then ! Condition de Neumann homogène
                     Flux=0
-                    if (i==2) then
-                      Residu_0(k)=Flux
 
+                    if (i==1) then
+                      Residu_0(k)=Flux
+                      Residu(k)=Flux
                     else
                       Residu(k)=Flux
-
                     end if
+
                   end if
 
                 end if
                 if (cl_arete(k)==11) then
 
                     Flux=-1._pr*D*(T_source-Tn(maille_arete(k,1)))/d_arete(k)
-                    if (i==2) then
-                      Residu_0(k)=Flux
 
+                    if (i==1) then
+                      Residu_0(k)=Flux
+                      Residu(k)=Flux
                     else
                       Residu(k)=Flux
-
                     end if
+
+
                 else if (cl_arete(k)==12) then
 
                     Flux=0
-                    if (i==2) then
+                    if (i==1) then
                       Residu_0(k)=Flux
-
+                      Residu(k)=Flux
                     else
                       Residu(k)=Flux
 
@@ -170,12 +173,12 @@ program main
                 Flux=-D*(Tn(maille_arete(k,2))-Tn(maille_arete(k,1)))/d_arete(k)
                 Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
                 Tn(maille_arete(k,2))=Tn(maille_arete(k,2))+Delta_t/aire_maille(maille_arete(k,2))*l_arete(k)*Flux
-                if (i==2) then
-                  Residu_0(k)=Flux
 
+                if (i==1) then
+                  Residu_0(k)=Flux
+                  Residu(k)=Flux
                 else
                   Residu(k)=Flux
-
                 end if
 
             end if
@@ -190,8 +193,14 @@ program main
         ! print *, "Tn", Tn
 
         ! Calcul du résidu à chaque itération
-        if (i>20 .and. i<800) then 
+      !if (i>24 .and. i<130) then
         write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0)
+      !end if
+
+      if(norm2(Residu)/norm2(Residu_0)<0.123) then
+        print *, 'le nombre d iter max est de ', i
+        print *, "DeltaT*Residu= ", Delta_t*norm2(Residu)
+        exit
       end if
 
 
@@ -202,7 +211,7 @@ program main
             call sortie(i,Tn,coord_noeud,noeud_maille)
         end if
     end do
-
+    !print*, norm2(Residu_0)
 
     !print *, "Tf", Tn
 
