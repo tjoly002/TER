@@ -51,7 +51,7 @@ program main
     do i=1,nb_mailles
         Tn(i)=T_init
     end do
-    !print *, Tn
+
 
 
     !Calcul du pas de temps /Etape4
@@ -76,7 +76,7 @@ program main
 
     Delta_t=min
 
-    !Le Delta_t est bonnnnnnnnn!!!
+
 
     allocate(Iter(1:int(t_max/Delta_t)))
 
@@ -92,19 +92,15 @@ program main
 
     !Allocate le vecteur contenant les numeros des aretes de bord
     allocate(arete_bord(nb_arete_bord))
+
     compteur=1 !indice du vecteur contenant les numeros des aretes de bord
+
     do k=1,nb_aretes
         if (maille_arete(k,2)==0) then
             arete_bord(compteur)=k
             compteur=compteur+1
         end if
     end do
-
-    !Verification des CL selon la valeur de cl_arete
-    ! print*, arete_bord
-    ! do k=1,nb_arete_bord
-    !     print* , cl_arete(arete_bord(k))
-    ! end do
 
 
     !Boucle en temps
@@ -194,14 +190,14 @@ program main
 
         ! Calcul du résidu à chaque itération
       !if (i>24 .and. i<130) then
-        write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0)
+      write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0)
       !end if
 
-      if(norm2(Residu)/norm2(Residu_0)<0.123) then
-        print *, 'le nombre d iter max est de ', i
-        print *, "DeltaT*Residu= ", Delta_t*norm2(Residu)
-        exit
-      end if
+      ! if(norm2(Residu)/norm2(Residu_0)<0.123) then
+      !   print *, 'le nombre d iter max est de ', i
+      !   print *, "DeltaT*Residu= ", Delta_t*norm2(Residu)
+      !   exit
+      ! end if
 
 
 

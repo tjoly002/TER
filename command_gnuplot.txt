@@ -1,8 +1,8 @@
 set logscal xy
 set xlabel "log(Iteration)"
 set ylabel "log(Résidu)"
-mc(x)=a*x+b
-fit mc(x) "Residu.dat" using (log($1)):(log($2)) via a,b
-plot "Residu.dat" using 1:2 title "Courbe erreur globale en fonction du dx" , exp(mc(log(x))) title sprintf("droite pente ordre %.6f x + %.5f", a,b)
+#mc(x)=a*x+b
+#fit mc(x) "Residu.dat" using (log($1)):(log($2)) via a,b
+#plot "Residu.dat" using 1:2 title "Courbe erreur globale en fonction du dx" , exp(mc(log(x))) title sprintf("droite pente ordre %.6f x + %.5f", a,b)
 
-#plot "Residu.dat" using 1:2 title "Courbe Residu en fonction du nombre d'itération" w l
+plot "Residu.dat" using 1:2 title "Courbe Residu en fonction du nombre d'itération" w l
