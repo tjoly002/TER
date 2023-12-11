@@ -189,9 +189,9 @@ program main
         ! print *, "Tn", Tn
 
         ! Calcul du résidu à chaque itération
-      !if (i>24 .and. i<130) then
+      if (i>100 .and. i<200) then
       write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0)
-      !end if
+      end if
 
       ! if(norm2(Residu)/norm2(Residu_0)<0.123) then
       !   print *, 'le nombre d iter max est de ', i
