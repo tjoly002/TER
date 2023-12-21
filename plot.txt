@@ -1,0 +1,4 @@
+set logscal xy
+set xlabel "log(Iteration)"
+set ylabel "log(Résidu)"
+plot "Residu.dat" using 1:2 title "Courbe Residu en fonction du nombre d'itération" w l
