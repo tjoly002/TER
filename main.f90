@@ -55,35 +55,45 @@ program main
 
 
 
-    !Calcul du pas de temps /Etape4
+    !Calcul du pas de temps si NH/Etape4
      !Calcul du min
-    min=10e6
-    do i=1,nb_mailles
+    if(cl_bord=="NH")then
+      min=10e6
+      do i=1,nb_mailles
 
-        !Calcul de la somme pour Delta_t
+          !Calcul de la somme pour Delta_t
 
-        S=0
-        do k=1,3
+          S=0
+          do k=1,3
 
-            S=S+l_arete(arete_maille(i,k))*D/d_arete(arete_maille(i,k))
-        end do
+              S=S+l_arete(arete_maille(i,k))*D/d_arete(arete_maille(i,k))
+          end do
 
-        if (aire_maille(i)/S<min) then
-            min=aire_maille(i)/S
 
-        end if
+          if (aire_maille(i)/S<min) then
+              min=aire_maille(i)/S
 
-    end do
+          end if
 
-    Delta_t=min
+          
 
-    print*, Delta_t
 
-    print*, "Quelle valeur de Deltat_t voulez-vous ?"
+      end do
 
-    read*, Delta_t
-    print*, Delta_t
+      Delta_t=min
 
+      print*, "La veleur max du Delta_t pour respecter la CFL vaut : ", Delta_t
+
+      print*, "Quelle valeur de Deltat_t voulez-vous alors ?"
+
+      read*, Delta_t
+      print*, Delta_t
+    else 
+      print*, "Le temps max vaut ", t_max
+      print*, "Quelle valeur de Deltat_t voulez-vous pour FR ?"
+      read*, Delta_t
+      print*, Delta_t
+    end if 
     allocate(Iter(1:int(t_max/Delta_t)))
 
     !Boucle en temps/Etape5
@@ -110,7 +120,7 @@ program main
 
 
     !Boucle en temps
-    ! print*, "Boucle en temps 1"
+    !print*, "Boucle en temps 1"
     call sortie(0,Tn,coord_noeud,noeud_maille)
    do i=1,int(t_max/Delta_t)
         !Calcul du flux sur les aretes de bord
@@ -122,8 +132,8 @@ program main
 
                 if (cl_arete(k)==10) then
                   if(cl_bord=="FR") then !Condition de Fourier-Robin
-                    Flux=h*(Tn(maille_arete(k,1))-T_ext)
-
+                    Flux=-h*D/d_arete(k)*(T_ext-Tn(maille_arete(k,1)))/(h+D/d_arete(k))
+                    !print*, "Boucle en temps 3"
                     if (i==1) then
                       Residu_0(k)=Flux
                       Residu(k)=Flux
@@ -133,7 +143,7 @@ program main
 
                   else if(cl_bord=="NH") then ! Condition de Neumann homogène
                     Flux=0
-                    !  print*, "Boucle en temps 4"
+                    !print*, "Boucle en temps 4"
                     if (i==1) then
                       Residu_0(k)=Flux
                       Residu(k)=Flux
@@ -145,8 +155,8 @@ program main
 
                 end if
                 if (cl_arete(k)==11) then
-                  !  print*, "Boucle en temps 5"
-                    Flux=-1._pr*D*(T_source-Tn(maille_arete(k,1)))/d_arete(k)
+                    !print*, "Boucle en temps 5"
+                    Flux=-h*D/d_arete(k)*(T_source-Tn(maille_arete(k,1)))/(h+D/d_arete(k))
 
                     if (i==1) then
                       Residu_0(k)=Flux
@@ -157,24 +167,31 @@ program main
 
 
                 else if (cl_arete(k)==12) then
-                  !  print*, "Boucle en temps 6"
+                    !print*, "Boucle en temps 6"
                     Flux=0
                     if (i==1) then
                       Residu_0(k)=Flux
                       Residu(k)=Flux
+                      !print*, "Boucle en temps 6.1"
                     else
                       Residu(k)=Flux
+                      !print*, "Boucle en temps 6.2"
 
                     end if
 
                 end if
+                !print*, "Boucle en temps 6.3.1", Flux
+                Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
+                !print*, "Boucle en temps 6.3.2"
 
-                Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
             else
-              !  print*, "Boucle en temps 7"
+                !print*, "Boucle en temps 7"
                 Flux=-D*(Tn(maille_arete(k,2))-Tn(maille_arete(k,1)))/d_arete(k)
+                !print*, "Boucle en temps 7.1"
                 Tn(maille_arete(k,1))=Tn(maille_arete(k,1))-Delta_t/aire_maille(maille_arete(k,1))*l_arete(k)*Flux
+                !print*, "Boucle en temps 7.2"
                 Tn(maille_arete(k,2))=Tn(maille_arete(k,2))+Delta_t/aire_maille(maille_arete(k,2))*l_arete(k)*Flux
+                !print*, "Boucle en temps 7.3"
 
                 if (i==1) then
                   Residu_0(k)=Flux
@@ -192,19 +209,19 @@ program main
 
         end do
 
-      !  print *, "sortie de boucle "
+        !print *, "sortie de boucle "
 
 
 
-        ! print* ,"i=", i
-        ! print *, "Tn", Tn
+        !print* ,"i=", i
+        !print *, "Tn", Tn
 
         ! Calcul du résidu à chaque itération
 
-       if (i>0) then
-        write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0),norm2(Residu)*Delta_t, norm2(Residu)
-      !  print*, norm2(Residu)/norm2(Residu_0)
-       end if
+        if (i<2000 ) then
+         write(2,*), Iter(i),norm2(Residu)/norm2(Residu_0),norm2(Residu)*Delta_t, norm2(Residu)
+        !  print*, norm2(Residu)/norm2(Residu_0)
+        end if
 
       ! if(norm2(Residu)/norm2(Residu_0)<0.5) then
       !   print *, 'le nombre d iter max est de ', i
@@ -214,13 +231,12 @@ program main
 
 
 
-
-      nplot=int(t_max/Delta_t/100)
-        !print*, nplot
-       if (mod(i,nplot)==0) then
-           !print*,"Boucle sortie"
-           call sortie(i,Tn,coord_noeud,noeud_maille)
-        end if
+      nplot=int(t_max/Delta_t/100._pr)
+      !print*, nplot, t_max
+      if (mod(i,nplot)==0) then
+        call sortie(i,Tn,coord_noeud,noeud_maille)
+        !print*,"Boucle sortie"
+       end if
            
     end do
    
