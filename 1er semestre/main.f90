@@ -156,7 +156,7 @@ program main
                 end if
                 if (cl_arete(k)==11) then
                     !print*, "Boucle en temps 5"
-                    Flux=-h*D/d_arete(k)*(T_source-Tn(maille_arete(k,1)))/(h+D/d_arete(k))
+                    Flux=-D/d_arete(k)*(T_source-Tn(maille_arete(k,1)))
 
                     if (i==1) then
                       Residu_0(k)=Flux
